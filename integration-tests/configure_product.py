@@ -143,7 +143,6 @@ def modify_pom_files():
 def attach_jolokia_agent(spath):
     logger.info('attaching jolokia agent as a java agent')
     sp = str(spath)
-
     if sys.platform.startswith('win'):
         sp = sp + ".bat"
         jolokia_agent = "-javaagent:C:\\testgrid\\jolokia-jvm-1.6.0-agent.jar=port=8778,host=localhost,protocol=http "
@@ -158,17 +157,21 @@ def attach_jolokia_agent(spath):
                 out_file.write(line)
     else:
         sp = sp + ".sh"
-        jolokia_agent = \
+        jolokia_path = Path("/opt/wso2/jolokia-jvm-1.6.0-agent.jar")
+        if jolokia_path.is_file():
+            logger.info(str(jolokia_path))
+            jolokia_agent = \
             "    -javaagent:/opt/wso2/jolokia-jvm-1.6.0-agent.jar=port=8778,host=localhost,protocol=http \\\n"
-        with open(sp, "r") as in_file:
-            buf = in_file.readlines()
-        with open(sp, "w") as out_file:
-            for line in buf:
-                if line == "    $JAVACMD \\\n":
-                    line = line + jolokia_agent
-                    logger.info(line)
-                out_file.write(line)
-
+            with open(sp, "r") as in_file:
+                buf = in_file.readlines()
+            with open(sp, "w") as out_file:
+                for line in buf:
+                    if line == "$JAVACMD \\\n":
+                        line = line + jolokia_agent
+                        logger.info(line)
+                        out_file.write(line)
+        else:
+            logger.info (str(jolokia_path) + " is missing")
 
 def modify_datasources():
     for data_source in datasource_paths:
